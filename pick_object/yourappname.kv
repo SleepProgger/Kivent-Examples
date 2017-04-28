@@ -1,0 +1,142 @@
+#:kivy 1.9.0
+ 
+TestGame:
+ 
+<TestGame>:
+    gameworld: gameworld
+    app: app
+    
+    GameWorld:
+    	z_index: 1
+        id: gameworld
+        gamescreenmanager: gamescreenmanager
+        size_of_gameworld: 100*1024
+        zones: {'general': 20000}
+        PositionSystem2D:
+            system_id: 'position'
+            gameworld: gameworld
+            zones: ['general']
+		RotateSystem2D:
+            system_id: 'rotate'
+            gameworld: gameworld
+            zones: ['general']
+        ColorSystem:
+            system_id: 'color'
+            gameworld: gameworld
+            zones: ['general']
+		CymunkPhysics:
+            gameworld: root.gameworld
+            zones: ['general']
+        RotateColorRenderer:
+            gameworld: gameworld
+            zones: ['general']
+            frame_count: 3
+            updateable: True
+            size_of_batches: 256
+			size_of_component_block: 128
+			shader_source: 'assets/glsl/positioncolorrotateshader.glsl'
+			gameview: 'camera1'
+        GameView:
+            system_id: 'camera1'
+            gameworld: gameworld
+            size: root.size
+            window_size: root.size
+            pos: root.pos
+            do_scroll: True
+            do_scroll_lock: False
+            
+    GameScreenManager:
+        id: gamescreenmanager
+        size: root.size
+        pos: root.pos
+        gameworld: gameworld
+ 
+<GameScreenManager>:
+    MainScreen:
+        id: main_screen
+        
+ 
+<MainScreen@GameScreen>:
+    name: 'main'
+    z_index: 1
+    FloatLayout:
+        DebugPanel:
+			size_hint: (1, 0.1)
+			pos_hint: {'top': 1, 'left': 1}
+
+		BoxLayout:
+			id: bottom_pane
+    		z_index: 0
+			size_hint: (1, None)
+			height: 150
+			orientation: 'vertical'
+			
+			canvas.before:
+				Color:
+					rgba: 0.2, 0.2, 0.2, 0.85
+				Rectangle:
+					pos: self.pos
+					size: self.size
+					
+			BoxLayout:
+				orientation: 'horizontal'
+				Button:
+		            text: 'More Asteroids'
+		            on_release: app.root.draw_some_stuff()
+		        Button:
+		            text: 'Kill Force'
+		            on_release: app.root.set_asteroid_velocity(app.selected_id, 0, 0)
+		        Button:
+		            text: 'Remove Asteroid'
+		            on_release: app.root.destroy_asteroid(app.selected_id)
+		            
+			GridLayout:
+				size_hint: (1, 1)
+				cols: 2					
+				Label:
+					text: 'Position: '
+					size: self.texture_size
+				Label:
+					text_size: self.size
+					halign: 'left'
+					valign: 'middle'
+					text: "-" if app.selected_coords is None else "%i, %i" % app.selected_coords
+					
+				Label:
+					text: 'Velocity:'
+					size: self.texture_size
+				BoxLayout:
+					TextInput:
+						id: txt_vel_x
+						text: "0" if app.selected_velocity is None else "%.6f" % app.selected_velocity[0]
+					TextInput:
+						id: txt_vel_y
+						text: "0" if app.selected_velocity is None else "%.6f" % app.selected_velocity[1]
+			        Button:
+			            text: 'Update'
+		            	on_release: app.root.set_asteroid_velocity(app.selected_id, float(txt_vel_x.text), float(txt_vel_y.text))
+			
+			# spacer because i suck at kv design
+			BoxLayout:
+				size_hint: (1, None)
+				height: 10
+
+ 
+<DebugPanel@Widget>
+	size: root.size
+	pos: root.pos
+	FloatLayout:
+		size: root.size
+		pos: root.pos
+		Label:
+			id: "fps"
+			pos_hint: {'x':0, 'y':0.1}
+			size_hint: (0.3, 0.8)
+        	font_size: root.size[1]*.4
+			text: 'FPS: ' + str(app.fps)
+		Label:
+			pos_hint: {'right': 1, 'y':0.1}
+			size_hint: (0.3, 0.8)
+        	font_size: root.size[1]*.4
+			text: 'Asteroids: ' + str(app.count)
+        
