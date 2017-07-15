@@ -3,10 +3,8 @@ from kivy.uix.widget import Widget
 from kivy.uix.treeview import TreeView, TreeViewLabel
 from kivy.clock import Clock
 from kivy.core.window import Window
-from random import randint, choice
-from math import radians, degrees, pi, sin, cos
+from math import radians, degrees
 import kivent_core
-import kivent_cymunk
 from kivent_core.gameworld import GameWorld, ObjectProperty
 from kivent_core.managers.resource_managers import texture_manager
 from kivent_core.systems.renderers import RotateRenderer
@@ -49,6 +47,16 @@ class AttachmentSystemDemoAPI():
         You can safely attach entities already attached to an other entity.
         It will be automatically detached from the previous parent.
         """
+        
+        # If you create cycles in the children parent relations (a->b->a)
+        # the whole subtree (a and b in this case) won't be updated anymore.
+        # Normally you'd want to avoid cycles.
+        attachment = getattr(self.entities[parent_id],
+                             self.attachment_system.system_id)
+        if attachment.has_ancestor(child_id):
+            raise ValueError("Cycle in relationtree detected.")
+        # Alternative:
+        #if self.attachment_system.has_ancestor_by_id(parent_id, child_id):            
         self.attachment_system.attach_child(parent_id, child_id)
     
     def detach_entity(self, entity_id):
@@ -220,6 +228,7 @@ class TestGame(Widget):
             value=self.on_rotation_change)
         
     def create_entity(self, parent_id, local_position):
+        camera = self.gameworld.system_manager['camera1']
         create_component_dict = { 
             'rotate_color_renderer': {
                 'texture': 'star3-blue',
@@ -227,7 +236,7 @@ class TestGame(Widget):
                 'render': True
             },
             'color': self._ent_default_color,
-            'position': Window.center,
+            'position': camera.get_camera_center(),
             'rotate': 0,
             # Create root entities with 'parent':-1 or simply use an empty dict.
             # Like 'attachment': {}
