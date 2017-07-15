@@ -10,8 +10,8 @@ TestGame:
     	z_index: 1
         id: gameworld
         gamescreenmanager: gamescreenmanager
-        size_of_gameworld: 2000*1024
-        zones: {'general': 200000}
+        size_of_gameworld: 200*1024
+        zones: {'general': 2000}
         system_count: 10
         PositionSystem2D:
             system_id: 'local_position'
@@ -174,10 +174,8 @@ TestGame:
 					Slider:
 						id: rotation_slider
 						value: 360
-						range: (0, 360)
+						range: (-360, 360)
 						step: 1
-						#size_hint: (None, None)
-						#size: (self.parent.size[0] - slider_label.size[0], 50)
 					Label:
 						id: slider_label
 						text: "%i" % rotation_slider.value

@@ -13,15 +13,13 @@ from kivent_core.systems.renderers import RotateRenderer
 from kivent_core.systems.position_systems import PositionSystem2D
 from kivent_core.systems.rotate_systems import RotateSystem2D
 from kivy.properties import StringProperty, NumericProperty, ListProperty, BooleanProperty
-from functools import partial
-
-
 from kivent_attachment.attachment_system import LocalPositionRotateSystem2D
 from kivent_core.systems.gamesystem import GameSystem
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
+from kivy.graphics import Color, Rectangle
 
 
 class AttachmentSystemDemoAPI():
@@ -115,12 +113,22 @@ class SimpleDropDown(BoxLayout):
     row_height = NumericProperty(44)
     main_button = ObjectProperty(None)
     selected = ObjectProperty(None)
+    background = ListProperty((1,1,1,1))
     
     def __init__(self, *args, **kwargs):
         super(SimpleDropDown, self).__init__()
         self._dropdown = DropDown(size_hint_x=1)
         self.orientation = "vertical"
         self._dropdown.bind(on_select=self._selected)
+        with self._dropdown.canvas.before:
+            self._background_rect = Color(*self.background)
+            self.rect = Rectangle(size=self._dropdown.size,
+                           pos=self._dropdown.pos)
+        self._dropdown.bind(pos=self.on_update_rect, size=self.on_update_rect)
+    
+    def on_update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size        
 
     def _selected(self, source, widget):
         if widget != self.selected:
@@ -176,7 +184,8 @@ def _create_treeview_item(text, user_data=None):
     return item
         
 
-texture_manager.load_atlas('assets/background_objects.atlas')
+texture_manager.load_image('assets/star3-blue.png')
+
 
 class TestGame(Widget):
     def __init__(self, **kwargs):
@@ -213,7 +222,8 @@ class TestGame(Widget):
     def create_entity(self, parent_id, local_position):
         create_component_dict = { 
             'rotate_color_renderer': {
-                'texture': 'star1',
+                'texture': 'star3-blue',
+                'size': (50, 50),
                 'render': True
             },
             'color': self._ent_default_color,
@@ -238,7 +248,7 @@ class TestGame(Widget):
         else:
             parent = parent.entity_id
             tree_parent = self.entities[parent][1]
-        entity_id = self.create_entity(parent, (10,0), )
+        entity_id = self.create_entity(parent, (25,0), )
         entity = self.gameworld.entities[entity_id]
         ent_name = 'Item_%i' % entity_id
         tree_entry = _create_treeview_item(ent_name, entity_id)
@@ -253,7 +263,6 @@ class TestGame(Widget):
             return
         entity_id = entity_id.entity_id
         parent_id = self.entity_dropdown.selected
-        attachment_sytem = self.gameworld.system_manager['attachment']
         self.demoApi.detach_entity(entity_id)
         tree_parent = None
         if not parent_id is None:
